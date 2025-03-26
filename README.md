@@ -4,34 +4,29 @@ This is a quick and dirty addon that you can add to your mitm instance to get au
 
 ![example_mitm.png](images/example_mitm.png)
 
-## Installation
-Copy `decode.py` to your computer, modify the local key attribute to be equal to your device's localkey.
+## Pre-requisites
 
-Install python-roborock. The version I tested this with was 2.9.0
-`pip install python-roborock>=2.9.0`
+1. Prepare your python environment
 
-You can get that by doing the following:
-```python
-import asyncio
+```
+$ uv venv --python=3.13
+$ source .venv/bin/activate
+$ uv pip install -r requirements_dev.txt
+```
 
-from roborock.web_api import RoborockApiClient
+2. Obtain the device local key
 
-import pickle
-async def main():
-    web_api = RoborockApiClient(username="yourEmailHere")
-    user_data = await web_api.pass_login("YourPassHere")
-    # Or you can login with a code using web_api.code_login() and .request_code()
-    # Login via your password
-    home_data = await web_api.get_home_data_v2(user_data)
-    device = home_data.devices[0]
-    local_key = device.local_key
-
-asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
-asyncio.run(main())
-
+```
+$ python3 local_key.py --email "yourEmailHere" --password "YourPassHere" 
+Device ID: a106801c6de44080ac19b2
+Device Model: Roborock Living Room
+Local Key: KCnRya124dwk9
 
 ```
 
+## Installation
+
+Copy `decode.py` to your computer, modify the local key attribute to be equal to your device's localkey.
 
 Run mitm in the same location as the script.
 
