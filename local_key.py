@@ -28,7 +28,7 @@ async def main():
     # Or you can login with a code using web_api.code_login() and .request_code()
     # Login via your password
     try:
-        home_data = await web_api.get_home_data_v2(user_data)
+        home_data = await web_api.get_home_data_v3(user_data)
     except Exception as e:
         print(f"Failed to get device data: {e}")
         return
