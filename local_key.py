@@ -33,7 +33,7 @@ async def main():
         print(f"Failed to get device data: {e}")
         return
 
-    for device in home_data.devices:
+    for device in home_data.get_all_devices():
         local_key = device.local_key
         print(f"Device ID: {device.duid}")
         print(f"Device Model: {device.name}")
