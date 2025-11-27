@@ -2,45 +2,37 @@ from roborock.protocol import MessageParser
 import json
 
 LOCAL_KEY = "YOUR_KEY_HERE"
+
 def decode(message):
     parsed_message = MessageParser.parse(message, LOCAL_KEY)
     if parsed_message[0]:
         if parsed_message[0][0]:
             payload = parsed_message[0][0]
-            json_payload = json.loads(payload.payload.decode())
-            data_point_number, data_point = list(json_payload.get("dps").items())[0]
-            data_point_response = json.loads(data_point)
-            method =payload.get_method()
-            params = data_point_response.get("params")
-            result = data_point_response.get("result")
-            if result is not None:
-                result = json.dumps(result, indent=4)
-            result = f"Result: \n{result}\n" if result else ""
-            return (f"Protocol: {parsed_message[0][0].protocol}\n"
-                    f"Method: {method}\n"
-                    f"Params: {params}\n"
-                    f"{result}"
-                    f"DPS: {data_point_number}\n"
-                    f"ID:  {data_point_response.get('id')}")
+            parsed_payload = payload.payload.decode("latin1")
+            #print(parsed_payload)
+            return f"V:{payload.version} S:{payload.seq} T:{payload.timestamp} P:{payload.protocol} D:{parsed_payload}"
     return parsed_message
 
 
 
 from mitmproxy import contentviews
 from mitmproxy.utils import strutils
-from mitmproxy.contentviews import mqtt
+from mitmproxy.contentviews import _view_mqtt
 from mitmproxy.addonmanager import Loader
 from mitmproxy.contentviews import base
+from mitmproxy.contentviews._api import Contentview
+from mitmproxy.contentviews._api import Metadata
 
+import traceback
 
-
-class RoborockControlPacket(mqtt.MQTTControlPacket):
+class RoborockControlPacket(_view_mqtt.MQTTControlPacket):
     def __init__(self, packet):
         super().__init__(packet)
 
     def pprint(self):
         s = f"[{self.Names[self.packet_type]}]"
         if self.packet_type == self.PUBLISH:
+            print(self)
             if not self.payload:
                 return f"Empty payload"
             topic_name = strutils.bytes_to_escaped_str(self.topic_name)
@@ -48,6 +40,7 @@ class RoborockControlPacket(mqtt.MQTTControlPacket):
             try:
                 payload = decode(self.payload)
             except Exception:
+                topic_name = traceback.format_exc()
                 ...
             s += (f" {payload} \n"
                   f"Topic: '{topic_name}'")
@@ -56,13 +49,12 @@ class RoborockControlPacket(mqtt.MQTTControlPacket):
             return super().pprint()
 
 
-class Roborock(mqtt.ViewMQTT):
+class Roborock(Contentview):
     name = "Roborock"
 
-    def __call__(self, data, **metadata):
+    def prettify(self, data: bytes, metadata: Metadata):
         mqtt_packet = RoborockControlPacket(data)
-        text = mqtt_packet.pprint()
-        return "Roborock", base.format_text(text)
+        return mqtt_packet.pprint()
 
 
 view = Roborock()
